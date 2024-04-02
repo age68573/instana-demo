@@ -1,0 +1,35 @@
+package com.example;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.instana.sdk.annotation.Span;
+import com.instana.sdk.support.SpanSupport;
+@RestController
+public class HelloController {
+    private final String SPAN_NAME = "my-custom-http-server";
+
+    @GetMapping("/hello")
+    @Span(type = Span.Type.ENTRY, value = SPAN_NAME)
+    public String hello() {
+        // 觸發一個故意的錯誤
+	System.out.println("Current span ID: " + Long.toHexString(SpanSupport.currentSpanId(Span.Type.ENTRY)));
+    SpanSupport.annotate(Span.Type.ENTRY, SPAN_NAME, "tags.http.method", "GET");
+    SpanSupport.annotate(Span.Type.ENTRY, SPAN_NAME, "tags.http.status_code", "200");
+    SpanSupport.annotate(Span.Type.ENTRY, SPAN_NAME, "tags.error", "true");
+        int i = 1 / 0;
+        return "Hello, World!";
+    }
+    @GetMapping("/generate-error")
+    public String generateError() {
+        try {
+            // 故意觸發錯誤
+            int result = 1 / 0;
+            return "Success"; // 這一行不會執行，因為錯誤會在上一行觸發
+        } catch (Exception e) {
+            // 捕獲錯誤並打印錯誤訊息
+            System.out.println("An error occurred: " + e.getMessage());
+            return "Error occurred";
+        }
+    }
+}
+
